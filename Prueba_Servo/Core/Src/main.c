@@ -159,6 +159,7 @@ int main(void)
 		  int i = 25;
 		  HAL_Delay(1000);
 		  while(i < 126) {
+			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1);
 			  htim2.Instance->CCR2 = i;
 			  i++;
 			  HAL_Delay(50);
@@ -167,6 +168,7 @@ int main(void)
 
 		  int j = 125;
 		  while(j > 24) {
+			  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0);
 			  htim2.Instance->CCR2 = j;
 			  j--;
 			  HAL_Delay(50);
@@ -309,6 +311,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
 
 }
 
