@@ -537,7 +537,7 @@ int main(void)
  80005ac:	f7ff ff9c 	bl	80004e8 <debouncer>
  80005b0:	4603      	mov	r3, r0
  80005b2:	2b00      	cmp	r3, #0
- 80005b4:	d012      	beq.n	80005dc <main+0x54>
+ 80005b4:	d0f7      	beq.n	80005a6 <main+0x1e>
 		  pulsador = 0;
  80005b6:	4b36      	ldr	r3, [pc, #216]	; (8000690 <main+0x108>)
  80005b8:	2200      	movs	r2, #0
@@ -555,7 +555,6 @@ int main(void)
  80005d2:	f44f 5180 	mov.w	r1, #4096	; 0x1000
  80005d6:	482f      	ldr	r0, [pc, #188]	; (8000694 <main+0x10c>)
  80005d8:	f000 fe2c 	bl	8001234 <HAL_GPIO_WritePin>
-	  }
 
 		  htim2.Instance->CCR2 = 25;
  80005dc:	4b2a      	ldr	r3, [pc, #168]	; (8000688 <main+0x100>)
@@ -654,7 +653,7 @@ int main(void)
 		  HAL_Delay(1000);
  800067c:	f44f 707a 	mov.w	r0, #1000	; 0x3e8
  8000680:	f000 fb1e 	bl	8000cc0 <HAL_Delay>
-  {
+	  if(debouncer(&pulsador, GPIOA, GPIO_PIN_0)) {
  8000684:	e78f      	b.n	80005a6 <main+0x1e>
  8000686:	bf00      	nop
  8000688:	20000034 	.word	0x20000034
