@@ -138,6 +138,13 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
+	  if(debouncer(&pulsador, GPIOA, GPIO_PIN_0)) {
+		  pulsador = 0;
+		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1);
+		  HAL_Delay(500);
+		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0);
+	  }
+
 		  htim2.Instance->CCR2 = 25;
 		  HAL_Delay(1000);
 
