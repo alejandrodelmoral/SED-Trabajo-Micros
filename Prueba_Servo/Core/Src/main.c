@@ -79,6 +79,15 @@ int debouncer(volatile int* button_int, GPIO_TypeDef* GPIO_port, uint16_t GPIO_n
 	return 0;
 }
 
+void moverServo(TIM_HandleTypeDef* htim, int grados)
+{
+	const int MAX = 20; // Max valor de frecuencia son 20ms -> 1/50Hz
+	float ms = grados/90.0f + 0.5f; // De los valores min y max del servo (0.5ms son 0º, 2.5ms son 180º) -> Ecuacion recta
+	float duty = ms/(float)MAX; // Porcentaje del ciclo encendido
+	uint32_t CCR = htim->Instance->ARR * duty;	// El valor del CCR es ARR * duty, el ARR es del propio htim
+	htim->Instance->CCR2 = CCR; // Se asigna el CCR calculado al CCR2 del htim
+}
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -144,6 +153,34 @@ int main(void)
 		  HAL_Delay(500);
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0);
 
+		  moverServo(&htim2, 0); // Mueve el servo que esta en htim2, X grados
+		  HAL_Delay(1000);
+
+		  moverServo(&htim2, 45);
+		  HAL_Delay(1000);
+
+		  moverServo(&htim2, 90);
+		  HAL_Delay(1000);
+
+		  moverServo(&htim2, 135);
+		  HAL_Delay(1000);
+
+		  moverServo(&htim2, 180);
+		  HAL_Delay(1000);
+
+		  for(int i = 0; i < 180; i++)
+		  {
+			  moverServo(&htim2, i);
+			  HAL_Delay(25);
+		  }
+
+		  for(int i = 180; i > 0; i--)
+		  {
+		  	  moverServo(&htim2, i);
+		  	  HAL_Delay(25);
+		  }
+
+		  /*
 		  htim2.Instance->CCR2 = 25;
 		  HAL_Delay(1000);
 
@@ -173,6 +210,7 @@ int main(void)
 			  HAL_Delay(50);
 		  }
 		  HAL_Delay(1000);
+		  */
 	  }
 
   }
