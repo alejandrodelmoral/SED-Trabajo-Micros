@@ -1,4 +1,4 @@
-# Micros
+# Domótica
 
 _Este proyecto es realizado para la asignatura de cuarto curso **Sistemas Electrónicos Digitales** impartida en el Grado en Ingeniería Electrónica Industrial y Automática, curso 2021/22._
 
