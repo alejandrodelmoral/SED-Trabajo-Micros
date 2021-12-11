@@ -46,13 +46,15 @@ TIM_HandleTypeDef htim2;
 
 volatile int pulsador = 0;
 
-void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin) {
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
 	if(GPIO_Pin == GPIO_PIN_0) {
 		pulsador = 1;
 	}
 }
 
-int debouncer(volatile int* button_int, GPIO_TypeDef* GPIO_port, uint16_t GPIO_number) {
+int debouncer(volatile int* button_int, GPIO_TypeDef* GPIO_port, uint16_t GPIO_number)
+{
 	static uint8_t button_count = 0;
 	static int counter = 0;
 
