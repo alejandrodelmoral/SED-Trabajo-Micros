@@ -123,23 +123,23 @@ void moverServo(TIM_HandleTypeDef* htim, int grados)
 	const int MAX = 20; // Max valor de frecuencia son 20ms -> 1/50Hz
 	float ms = grados/90.0f + 0.5f; // De los valores min y max del servo (0.5ms son 0º, 2.5ms son 180º) -> Ecuacion recta
 	float duty = ms/(float)MAX; // Porcentaje del ciclo encendido
-	uint32_t CCR = htim->Instance->ARR * duty;	// El valor del CCR es ARR * duty, el ARR es del propio htim
+	uint32_t CCR = htim->Instance->ARR * duty; // El valor del CCR es ARR * duty, el ARR es del propio htim
 	htim->Instance->CCR2 = CCR; // Se asigna el CCR calculado al CCR2 del htim
 }
 
 // Ultrasonidos HC-SR04
 float calcularDistancia(uint64_t time)
 {
-	const float Vsonido = 340.0f;	// Velocidad sonido = 340m/s
-	float dist = (float)time * Vsonido / 2.0f / 10000.0f;	// El 1/10000 es por el cambio de conversion de s a us y de m a cm
-	return dist;	// En cm
+	const float Vsonido = 340.0f; // Velocidad sonido = 340m/s
+	float dist = (float)time * Vsonido / 2.0f / 10000.0f; // El 1/10000 es por el cambio de conversion de s a us y de m a cm
+	return dist; // En cm
 }
 
 void leerUltrasonido(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
 {
-	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 1);	// Activar TRIG
-	HAL_Delay(0.01);  // Esperar 10 us = 0.01 ms
-	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 0);	// Desactivar TRIG
+	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 1); // Activar TRIG
+	HAL_Delay(0.01); // Esperar 10 us = 0.01 ms
+	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 0); // Desactivar TRIG
 }
 
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
@@ -147,25 +147,25 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 	static uint64_t timeRise = 0, timeFall = 0, timeDif = 0;
 	static uint8_t EdgeCapture = 0;	// 0 si va a detectar flanco de subida, 1 si va a detectar falcno de bajada
 
-	if (!EdgeCapture)	// Si se va a detectar el flanco de subida
+	if (!EdgeCapture) // Si se va a detectar el flanco de subida
 	{
-		EdgeCapture = 1;  // Se cambia para detectar despues el flanco de bajada
+		EdgeCapture = 1; // Se cambia para detectar despues el flanco de bajada
 
-		timeRise = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);	// Se guarda el instsnte de tiempo en el que se ha alcanzado el flanco de subida
+		timeRise = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1); // Se guarda el instsnte de tiempo en el que se ha alcanzado el flanco de subida
 
-		__HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1, TIM_INPUTCHANNELPOLARITY_FALLING);	// Cambio del tipo de flanco para detectar flancos de bajada
+		__HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1, TIM_INPUTCHANNELPOLARITY_FALLING); // Cambio del tipo de flanco para detectar flancos de bajada
 	}
-	else	// Si se va a detectar el flanco de bajada
+	else // Si se va a detectar el flanco de bajada
 	{
-		EdgeCapture = 0;	// Se cambia para detectar otro flanco de subida
+		EdgeCapture = 0; // Se cambia para detectar otro flanco de subida
 
-		timeFall = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);  // Se guarda el instsnte de tiempo en el que se ha alcanzado el flanco de bajada
+		timeFall = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1); // Se guarda el instsnte de tiempo en el que se ha alcanzado el flanco de bajada
 
 		__HAL_TIM_SET_COUNTER(htim, 0);	// Se pone a cero el contador de tiempo para la siguiente deteccion del flanco de subida
-		__HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1, TIM_INPUTCHANNELPOLARITY_RISING);	// Cambio del tipo de flanco para detectar flancos de subida
+		__HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1, TIM_INPUTCHANNELPOLARITY_RISING); // Cambio del tipo de flanco para detectar flancos de subida
 
-		timeDif = timeFall - timeRise;	// El tiempo necesario para calcular la distancia es la resta del tiempo de flancos
-		dist = calcularDistancia(timeDif);	// Se calcula la distancia en cm
+		timeDif = timeFall - timeRise; // El tiempo necesario para calcular la distancia es la resta del tiempo de flancos
+		dist = calcularDistancia(timeDif); // Se calcula la distancia en cm
 	}
 }
 
