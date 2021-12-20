@@ -59,6 +59,16 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define Servo_Pin GPIO_PIN_1
+#define Servo_GPIO_Port GPIOA
+#define LDR_Pin GPIO_PIN_2
+#define LDR_GPIO_Port GPIOA
+#define Temperatura_Pin GPIO_PIN_3
+#define Temperatura_GPIO_Port GPIOA
+#define ECHO_Pin GPIO_PIN_9
+#define ECHO_GPIO_Port GPIOE
+#define TRIG_Pin GPIO_PIN_10
+#define TRIG_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */

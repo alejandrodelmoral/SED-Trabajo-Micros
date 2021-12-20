@@ -44,6 +44,7 @@
 ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
 
+TIM_HandleTypeDef htim1;
 TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart6;
@@ -60,6 +61,9 @@ uint32_t LDR_valor;
 uint32_t Temp_valor = 0;
 float temp = 0;
 
+// Ultrasonidos HC-SR04
+float dist  = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -69,6 +73,7 @@ static void MX_USART6_UART_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
+static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -122,6 +127,48 @@ void moverServo(TIM_HandleTypeDef* htim, int grados)
 	htim->Instance->CCR2 = CCR; // Se asigna el CCR calculado al CCR2 del htim
 }
 
+// Ultrasonidos HC-SR04
+float calcularDistancia(uint64_t time)
+{
+	const float Vsonido = 340.0f;	// Velocidad sonido = 340m/s
+	float dist = (float)time * Vsonido / 2.0f / 10000.0f;	// El 1/10000 es por el cambio de conversion de s a us y de m a cm
+	return dist;	// En cm
+}
+
+void leerUltrasonido(GPIO_TypeDef* GPIOx, uint16_t GPIO_Pin)
+{
+	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 1);	// Activar TRIG
+	HAL_Delay(0.01);  // Esperar 10 us = 0.01 ms
+	HAL_GPIO_WritePin(GPIOx, GPIO_Pin, 0);	// Desactivar TRIG
+}
+
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+	static uint64_t timeRise = 0, timeFall = 0, timeDif = 0;
+	static uint8_t EdgeCapture = 0;	// 0 si va a detectar flanco de subida, 1 si va a detectar falcno de bajada
+
+	if (!EdgeCapture)	// Si se va a detectar el flanco de subida
+	{
+		EdgeCapture = 1;  // Se cambia para detectar despues el flanco de bajada
+
+		timeRise = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);	// Se guarda el instsnte de tiempo en el que se ha alcanzado el flanco de subida
+
+		__HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1, TIM_INPUTCHANNELPOLARITY_FALLING);	// Cambio del tipo de flanco para detectar flancos de bajada
+	}
+	else	// Si se va a detectar el flanco de bajada
+	{
+		EdgeCapture = 0;	// Se cambia para detectar otro flanco de subida
+
+		timeFall = HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);  // Se guarda el instsnte de tiempo en el que se ha alcanzado el flanco de bajada
+
+		__HAL_TIM_SET_COUNTER(htim, 0);	// Se pone a cero el contador de tiempo para la siguiente deteccion del flanco de subida
+		__HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1, TIM_INPUTCHANNELPOLARITY_RISING);	// Cambio del tipo de flanco para detectar flancos de subida
+
+		timeDif = timeFall - timeRise;	// El tiempo necesario para calcular la distancia es la resta del tiempo de flancos
+		dist = calcularDistancia(timeDif);	// Se calcula la distancia en cm
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -156,10 +203,11 @@ int main(void)
   MX_TIM2_Init();
   MX_ADC1_Init();
   MX_ADC2_Init();
+  MX_TIM1_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_UART_Receive_IT(&huart6, (uint8_t*)readBuf, 1);
-
+  HAL_TIM_IC_Start_IT(&htim1, TIM_CHANNEL_1);
   HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
 
   /* USER CODE END 2 */
@@ -219,6 +267,10 @@ int main(void)
 
 	  uint32_t R_NTC = 10000.0 / (1023.0 / Temp_valor - 1.0);
 	  temp = 1.0 / ((1.0 / (25 + 273.15)) + (1.0 / 3950.0) * (log(R_NTC / 10000.0))) - 273.15;
+
+	  // Ejemplo ultrasonidos HC-SR04
+		leerUltrasonido(GPIOA, GPIO_PIN_10); // Leer Ultrasonido conectado a pin A10
+		HAL_Delay(100); // Espera para volver a disparar, NO menor a 100ms !!!
 
   /* USER CODE END 3 */
   }
@@ -369,6 +421,55 @@ static void MX_ADC2_Init(void)
 }
 
 /**
+  * @brief TIM1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM1_Init(void)
+{
+
+  /* USER CODE BEGIN TIM1_Init 0 */
+
+  /* USER CODE END TIM1_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+  TIM_IC_InitTypeDef sConfigIC = {0};
+
+  /* USER CODE BEGIN TIM1_Init 1 */
+
+  /* USER CODE END TIM1_Init 1 */
+  htim1.Instance = TIM1;
+  htim1.Init.Prescaler = 84-1;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim1.Init.Period = 65535-1;
+  htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim1.Init.RepetitionCounter = 0;
+  htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_IC_Init(&htim1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim1, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sConfigIC.ICPolarity = TIM_INPUTCHANNELPOLARITY_RISING;
+  sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
+  sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
+  sConfigIC.ICFilter = 0;
+  if (HAL_TIM_IC_ConfigChannel(&htim1, &sConfigIC, TIM_CHANNEL_1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM1_Init 2 */
+
+  /* USER CODE END TIM1_Init 2 */
+
+}
+
+/**
   * @brief TIM2 Initialization Function
   * @param None
   * @retval None
@@ -473,10 +574,14 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
+  __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : PD12 */
   GPIO_InitStruct.Pin = GPIO_PIN_12;
@@ -484,6 +589,13 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : TRIG_Pin */
+  GPIO_InitStruct.Pin = TRIG_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(TRIG_GPIO_Port, &GPIO_InitStruct);
 
 }
 
