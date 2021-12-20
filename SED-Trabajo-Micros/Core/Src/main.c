@@ -269,8 +269,8 @@ int main(void)
 	  temp = 1.0 / ((1.0 / (25 + 273.15)) + (1.0 / 3950.0) * (log(R_NTC / 10000.0))) - 273.15;
 
 	  // Ejemplo ultrasonidos HC-SR04
-		leerUltrasonido(GPIOA, GPIO_PIN_10); // Leer Ultrasonido conectado a pin A10
-		HAL_Delay(100); // Espera para volver a disparar, NO menor a 100ms !!!
+	  leerUltrasonido(GPIOA, GPIO_PIN_10); // Leer Ultrasonido conectado a pin A10
+	  HAL_Delay(100); // Espera para volver a disparar, NO menor a 100ms !!!
 
   /* USER CODE END 3 */
   }
