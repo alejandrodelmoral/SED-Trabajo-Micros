@@ -59,6 +59,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define Detector_de_sonidos_Pin GPIO_PIN_0
+#define Detector_de_sonidos_GPIO_Port GPIOC
 #define Servo_Pin GPIO_PIN_1
 #define Servo_GPIO_Port GPIOA
 #define LDR_Pin GPIO_PIN_2
