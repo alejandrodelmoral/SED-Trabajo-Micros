@@ -22,6 +22,8 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include <math.h>
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -40,6 +42,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 ADC_HandleTypeDef hadc1;
+ADC_HandleTypeDef hadc2;
 
 TIM_HandleTypeDef htim2;
 
@@ -53,6 +56,10 @@ char readBuf[1];
 // LDR
 uint32_t LDR_valor;
 
+// Sensor de temperatura
+uint32_t Temp_valor = 0;
+float temp = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -61,6 +68,7 @@ static void MX_GPIO_Init(void);
 static void MX_USART6_UART_Init(void);
 static void MX_TIM2_Init(void);
 static void MX_ADC1_Init(void);
+static void MX_ADC2_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -147,6 +155,7 @@ int main(void)
   MX_USART6_UART_Init();
   MX_TIM2_Init();
   MX_ADC1_Init();
+  MX_ADC2_Init();
   /* USER CODE BEGIN 2 */
 
   HAL_UART_Receive_IT(&huart6, (uint8_t*)readBuf, 1);
@@ -191,13 +200,25 @@ int main(void)
 	  }
 	  HAL_ADC_Stop(&hadc1);
 
-	  if(LDR_valor <= 60) {
+	  if(LDR_valor <= 60)
+	  {
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1);
 	  }
-	  else {
+	  else
+	  {
 		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0);
 	  }
 
+	  // Ejemplo sensor de temperatura
+	  HAL_ADC_Start(&hadc2);
+	  if (HAL_ADC_PollForConversion(&hadc2, 100) == HAL_OK)
+	  {
+	      Temp_valor = HAL_ADC_GetValue(&hadc2);
+	  }
+	  HAL_ADC_Stop(&hadc2);
+
+	  uint32_t R_NTC = 10000.0 / (1023.0 / Temp_valor - 1.0);
+	  temp = 1.0 / ((1.0 / (25 + 273.15)) + (1.0 / 3950.0) * (log(R_NTC / 10000.0))) - 273.15;
 
   /* USER CODE END 3 */
   }
@@ -294,6 +315,56 @@ static void MX_ADC1_Init(void)
   /* USER CODE BEGIN ADC1_Init 2 */
 
   /* USER CODE END ADC1_Init 2 */
+
+}
+
+/**
+  * @brief ADC2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_ADC2_Init(void)
+{
+
+  /* USER CODE BEGIN ADC2_Init 0 */
+
+  /* USER CODE END ADC2_Init 0 */
+
+  ADC_ChannelConfTypeDef sConfig = {0};
+
+  /* USER CODE BEGIN ADC2_Init 1 */
+
+  /* USER CODE END ADC2_Init 1 */
+  /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
+  */
+  hadc2.Instance = ADC2;
+  hadc2.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV2;
+  hadc2.Init.Resolution = ADC_RESOLUTION_10B;
+  hadc2.Init.ScanConvMode = DISABLE;
+  hadc2.Init.ContinuousConvMode = DISABLE;
+  hadc2.Init.DiscontinuousConvMode = DISABLE;
+  hadc2.Init.ExternalTrigConvEdge = ADC_EXTERNALTRIGCONVEDGE_NONE;
+  hadc2.Init.ExternalTrigConv = ADC_SOFTWARE_START;
+  hadc2.Init.DataAlign = ADC_DATAALIGN_RIGHT;
+  hadc2.Init.NbrOfConversion = 1;
+  hadc2.Init.DMAContinuousRequests = DISABLE;
+  hadc2.Init.EOCSelection = ADC_EOC_SINGLE_CONV;
+  if (HAL_ADC_Init(&hadc2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
+  */
+  sConfig.Channel = ADC_CHANNEL_3;
+  sConfig.Rank = 1;
+  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  if (HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN ADC2_Init 2 */
+
+  /* USER CODE END ADC2_Init 2 */
 
 }
 
