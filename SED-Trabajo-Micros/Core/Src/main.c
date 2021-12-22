@@ -179,6 +179,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 	}
 }
 
+// Control de la iluminación
 void luces(void)
 {
 	HAL_ADC_Start(&hadc1);
@@ -187,13 +188,26 @@ void luces(void)
 	}
 	HAL_ADC_Stop(&hadc1);
 
-	if(LDR_valor <= 60 || readBuf[0] == 'C') // Si hay poca luminosidad o si se pulsa el botón
+	if(LDR_valor <= 60 || readBuf[0] == 'A') // Si hay poca luminosidad o si se pulsa el botón
 	{
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1); // Enciende la luz
 	}
-	else if(LDR_valor > 60 || readBuf[0] == 'D') // Si hay suficiente luminosidad o si se pulsa el botón
+	else if(LDR_valor > 60 || readBuf[0] == 'B') // Si hay suficiente luminosidad o si se pulsa el botón
 	{
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0); // Apaga la luz
+	}
+}
+
+// Control de la puerta
+void puerta(void)
+{
+	moverServo(&htim2, 45);
+	HAL_Delay(1000);
+
+	for(int i = 0; i < 180; i++)
+	{
+		moverServo(&htim2, i);
+		HAL_Delay(25);
 	}
 }
 
@@ -251,28 +265,10 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  // Ejemplo servomotor SG90
-	  moverServo(&htim2, 45);
-	  HAL_Delay(1000);
+	  // Control puerta
+	  puerta();
 
-	  for(int i = 0; i < 180; i++)
-	  {
-		  moverServo(&htim2, i);
-		  HAL_Delay(25);
-	  }
-
-	  // Ejemplo Bluetooth
-	  if(readBuf[0] == 'A')
-	  {
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1);
-	  }
-
-	  else if(readBuf[0] == 'B')
-	  {
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0);
-	  }
-
-	  // Ejemplo LDR
+	  // Control iluminación
 	  luces();
 
 	  // Ejemplo sensor de temperatura
