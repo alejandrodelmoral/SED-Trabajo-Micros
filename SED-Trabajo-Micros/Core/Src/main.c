@@ -179,6 +179,24 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 	}
 }
 
+void luces(void)
+{
+	HAL_ADC_Start(&hadc1);
+	if(HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK) {
+		LDR_valor = HAL_ADC_GetValue(&hadc1);
+	}
+	HAL_ADC_Stop(&hadc1);
+
+	if(LDR_valor <= 60 || readBuf[0] == 'C') // Si hay poca luminosidad o si se pulsa el botón
+	{
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1); // Enciende la luz
+	}
+	else if(LDR_valor > 60 || readBuf[0] == 'D') // Si hay suficiente luminosidad o si se pulsa el botón
+	{
+		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0); // Apaga la luz
+	}
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -255,20 +273,7 @@ int main(void)
 	  }
 
 	  // Ejemplo LDR
-	  HAL_ADC_Start(&hadc1);
-	  if(HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK) {
-		  LDR_valor = HAL_ADC_GetValue(&hadc1);
-	  }
-	  HAL_ADC_Stop(&hadc1);
-
-	  if(LDR_valor <= 60)
-	  {
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1);
-	  }
-	  else
-	  {
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0);
-	  }
+	  luces();
 
 	  // Ejemplo sensor de temperatura
 	  HAL_ADC_Start(&hadc2);
