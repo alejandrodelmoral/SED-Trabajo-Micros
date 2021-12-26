@@ -72,6 +72,17 @@ uint32_t Sonidos_valor;
 // Zumbador pasivo
 uint8_t valor = 0;
 
+// Pulsadores
+volatile int pulsador_luces_ON = 0;
+volatile int pulsador_luces_OFF = 0;
+volatile int pulsador_puerta = 0;
+
+// Puerta
+uint32_t puerta_temp;
+int abierta = 0;
+int abriendo = 0;
+int cerrando = 0;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -96,6 +107,22 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(huart->Instance == huart6.Instance)
 		HAL_UART_Receive_IT(&huart6, (uint8_t*)readBuf, 1);
+}
+
+// Pulsadores
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
+{
+	if(GPIO_Pin == GPIO_PIN_1) {
+		pulsador_luces_ON = 1;
+	}
+
+	if(GPIO_Pin == GPIO_PIN_2) {
+		pulsador_luces_OFF = 1;
+	}
+
+	if(GPIO_Pin == GPIO_PIN_3) {
+		pulsador_puerta = 1;
+	}
 }
 
 // Debouncer
@@ -188,12 +215,14 @@ void luces(void)
 	}
 	HAL_ADC_Stop(&hadc1);
 
-	if(LDR_valor <= 60 || readBuf[0] == 'A') // Si hay poca luminosidad o si se pulsa el botón
+	if(LDR_valor <= 60 || readBuf[0] == 'A' || debouncer(&pulsador_luces_ON, GPIOC, GPIO_PIN_1)) // Si hay poca luminosidad, o si se usa Bluetooth o si se pulsa el botón
 	{
+		pulsador_luces_ON = 0;
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1); // Enciende la luz
 	}
-	else if(LDR_valor > 60 || readBuf[0] == 'B') // Si hay suficiente luminosidad o si se pulsa el botón
+	else if(LDR_valor > 60 || readBuf[0] == 'B' || debouncer(&pulsador_luces_OFF, GPIOC, GPIO_PIN_2)) // Si hay suficiente luminosidad o si se pulsa el botón
 	{
+		pulsador_luces_OFF = 0;
 		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0); // Apaga la luz
 	}
 }
@@ -201,13 +230,40 @@ void luces(void)
 // Control de la puerta
 void puerta(void)
 {
-	moverServo(&htim2, 45);
-	HAL_Delay(1000);
-
-	for(int i = 0; i < 180; i++)
+	if(readBuf[0] == 'C' || debouncer(&pulsador_puerta, GPIOC, GPIO_PIN_3)) // Si se usa Bluetooth o si se pulsa el botón
 	{
-		moverServo(&htim2, i);
-		HAL_Delay(25);
+		 if(abierta == 0) // Si la puerta está cerrada
+		 {
+			 abriendo = 1; // Activación del flag para abrir puerta
+		 }
+		 else // Si la puerta está abierta
+		 {
+			 cerrando = 1; // Activación del flag para cerrar puerta
+			 puerta_temp = 0; // Reinicio del tiempo de la puerta abierta
+		 }
+		 readBuf[0] = 0; // Reinicio del Bluetooth
+	}
+
+	if(abierta == 0 && abriendo == 1) // Si la puerta está cerrada y activado el flag para abrir la puerta
+	{
+		moverServo(&htim2, 90); // Se abre la puerta
+		abierta = 1; // Puerta ya abierta
+		abriendo = 0; // Desactivación del flag para abrir puerta
+		puerta_temp = HAL_GetTick(); // Se coge el tiempo actual
+	}
+
+	if(abierta == 1 && cerrando == 0 && (HAL_GetTick() - puerta_temp) > 10000) // Si la puerta está abierta, desactivado el flag para cerrar la puerta y han pasado 10s, se cierra
+	{
+		cerrando = 1; // Activación del flag para cerrar puerta
+		puerta_temp = 0; // Reinicio del tiempo de la puerta abierta
+	}
+
+	if(abierta == 1 && cerrando == 1) // Si la puerta está abierta y activado el flag para cerrar la puerta
+	{
+		moverServo(&htim2, 0); // Se cierra la puerta
+		abierta = 0; // Puerta ya cerrada
+		cerrando = 0; // Desactivación del flag para cerrar puerta
+		puerta_temp = 0; // Reinicio del tiempo de la puerta abierta
 	}
 }
 
@@ -725,6 +781,12 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
 
+  /*Configure GPIO pins : Pulsador_luces_ON_Pin Pulsador_luces_OFF_Pin Pulsador_puerta_Pin */
+  GPIO_InitStruct.Pin = Pulsador_luces_ON_Pin|Pulsador_luces_OFF_Pin|Pulsador_puerta_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   /*Configure GPIO pin : PD12 */
   GPIO_InitStruct.Pin = GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -738,6 +800,16 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(TRIG_GPIO_Port, &GPIO_InitStruct);
+
+  /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI1_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI2_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 
 }
 

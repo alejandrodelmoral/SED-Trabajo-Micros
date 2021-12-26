@@ -61,6 +61,15 @@ void Error_Handler(void);
 /* Private defines -----------------------------------------------------------*/
 #define Detector_de_sonidos_Pin GPIO_PIN_0
 #define Detector_de_sonidos_GPIO_Port GPIOC
+#define Pulsador_luces_ON_Pin GPIO_PIN_1
+#define Pulsador_luces_ON_GPIO_Port GPIOC
+#define Pulsador_luces_ON_EXTI_IRQn EXTI1_IRQn
+#define Pulsador_luces_OFF_Pin GPIO_PIN_2
+#define Pulsador_luces_OFF_GPIO_Port GPIOC
+#define Pulsador_luces_OFF_EXTI_IRQn EXTI2_IRQn
+#define Pulsador_puerta_Pin GPIO_PIN_3
+#define Pulsador_puerta_GPIO_Port GPIOC
+#define Pulsador_puerta_EXTI_IRQn EXTI3_IRQn
 #define Servo_Pin GPIO_PIN_1
 #define Servo_GPIO_Port GPIOA
 #define LDR_Pin GPIO_PIN_2
