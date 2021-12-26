@@ -80,6 +80,8 @@ void Error_Handler(void);
 #define Zumbador_pasivo_GPIO_Port GPIOB
 #define ECHO_Pin GPIO_PIN_9
 #define ECHO_GPIO_Port GPIOE
+#define Luces_Pin GPIO_PIN_8
+#define Luces_GPIO_Port GPIOC
 #define TRIG_Pin GPIO_PIN_10
 #define TRIG_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */

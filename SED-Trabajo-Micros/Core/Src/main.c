@@ -217,13 +217,13 @@ void luces(void)
 
 	if(LDR_valor <= 60 || readBuf[0] == 'A' || debouncer(&pulsador_luces_ON, GPIOC, GPIO_PIN_1)) // Si hay poca luminosidad, o si se usa Bluetooth o si se pulsa el botón
 	{
-		pulsador_luces_ON = 0;
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1); // Enciende la luz
+		pulsador_luces_ON = 0; // Reinicio del pulsador
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, 1); // Enciende la luz
 	}
-	else if(LDR_valor > 60 || readBuf[0] == 'B' || debouncer(&pulsador_luces_OFF, GPIOC, GPIO_PIN_2)) // Si hay suficiente luminosidad o si se pulsa el botón
+	else if(LDR_valor > 60 || readBuf[0] == 'B' || debouncer(&pulsador_luces_OFF, GPIOC, GPIO_PIN_2)) // Si hay suficiente luminosidad, o si se usa Bluetooth o si se pulsa el botón
 	{
-		pulsador_luces_OFF = 0;
-		HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0); // Apaga la luz
+		pulsador_luces_OFF = 0; // Reinicio del pulsador
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, 0); // Apaga la luz
 	}
 }
 
@@ -242,6 +242,7 @@ void puerta(void)
 			 puerta_temp = 0; // Reinicio del tiempo de la puerta abierta
 		 }
 		 readBuf[0] = 0; // Reinicio del Bluetooth
+		 pulsador_puerta = 0; // Reinicio del pulsador
 	}
 
 	if(abierta == 0 && abriendo == 1) // Si la puerta está cerrada y activado el flag para abrir la puerta, se abre
@@ -779,6 +780,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(Luces_GPIO_Port, Luces_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : Pulsador_luces_ON_Pin Pulsador_luces_OFF_Pin Pulsador_puerta_Pin */
@@ -787,12 +791,25 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PA0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pin : PD12 */
   GPIO_InitStruct.Pin = GPIO_PIN_12;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : Luces_Pin */
+  GPIO_InitStruct.Pin = Luces_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(Luces_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TRIG_Pin */
   GPIO_InitStruct.Pin = TRIG_Pin;
@@ -802,6 +819,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(TRIG_GPIO_Port, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
+  HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
   HAL_NVIC_SetPriority(EXTI1_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI1_IRQn);
 
