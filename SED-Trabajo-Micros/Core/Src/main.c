@@ -62,6 +62,10 @@ uint32_t LDR_valor;
 // Sensor de temperatura
 uint32_t Temp_valor;
 float temp = 0;
+uint32_t temperatura_temp;
+int medida_temp = 0;
+int midiendo_temp = 0;
+int no_midiendo_temp = 0;
 
 // Ultrasonidos HC-SR04
 float dist  = 0;
@@ -76,6 +80,7 @@ uint8_t valor = 0;
 volatile int pulsador_luces_ON = 0;
 volatile int pulsador_luces_OFF = 0;
 volatile int pulsador_puerta = 0;
+volatile int pulsador_temp = 0;
 
 // Puerta
 uint32_t puerta_temp;
@@ -122,6 +127,10 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 	if(GPIO_Pin == GPIO_PIN_3) {
 		pulsador_puerta = 1;
+	}
+
+	if(GPIO_Pin == GPIO_PIN_0) {
+		pulsador_temp = 1;
 	}
 }
 
@@ -253,7 +262,7 @@ void puerta(void)
 		puerta_temp = HAL_GetTick(); // Se coge el tiempo actual
 	}
 
-	if(abierta == 1 && cerrando == 0 && (HAL_GetTick() - puerta_temp) > 10000) // Si la puerta está abierta, desactivado el flag para cerrar la puerta y han pasado 10s, se cierra
+	if(abierta == 1 && cerrando == 0 && (HAL_GetTick() - puerta_temp) > 5000) // Si la puerta está abierta, desactivado el flag para cerrar la puerta y han pasado 5s, se cierra
 	{
 		cerrando = 1; // Activación del flag para cerrar puerta
 		puerta_temp = 0; // Reinicio del tiempo de la puerta abierta
@@ -266,6 +275,57 @@ void puerta(void)
 		cerrando = 0; // Desactivación del flag para cerrar puerta
 		puerta_temp = 0; // Reinicio del tiempo de la puerta abierta
 	}
+}
+
+// Control de la temperatura
+void temperatura(void)
+{
+	if(readBuf[0] == 'D' || debouncer(&pulsador_temp, GPIOA, GPIO_PIN_0)) // Si se usa Bluetooth o si se pulsa el botón
+	{
+		 if(medida_temp == 0) // Si no se está midiendo
+		 {
+			 midiendo_temp = 1; // Activación del flag para medir
+		 }
+		 else // Si se está midiendo
+		 {
+			 no_midiendo_temp = 1; // Activación del flag para no medir
+			 temperatura_temp = 0; // Reinicio del tiempo de la medición
+		 }
+		 readBuf[0] = 0; // Reinicio del Bluetooth
+		 pulsador_temp = 0; // Reinicio del pulsador
+	}
+
+	if(medida_temp == 0 && midiendo_temp == 1) // Si no se está midiendo y activado el flag para medir, se mide
+	{
+		HAL_ADC_Start(&hadc2);
+		if (HAL_ADC_PollForConversion(&hadc2, 100) == HAL_OK)
+		{
+			Temp_valor = HAL_ADC_GetValue(&hadc2);
+		}
+		HAL_ADC_Stop(&hadc2);
+
+		uint32_t R_NTC = 10000.0 / (1023.0 / Temp_valor - 1.0);
+		temp = 1.0 / ((1.0 / (25 + 273.15)) + (1.0 / 3950.0) * (log(R_NTC / 10000.0))) - 273.15;
+
+		medida_temp = 1; // Midiendo
+		midiendo_temp = 0; // Desactivación del flag para medir
+		temperatura_temp = HAL_GetTick(); // Se coge el tiempo actual
+	}
+
+	if(medida_temp == 1 && no_midiendo_temp == 0 && (HAL_GetTick() - temperatura_temp) > 10000) // Si está midiendo, desactivado el flag para no medir y han pasado 10s, no mide
+	{
+		no_midiendo_temp = 1; // Activación del flag para no medir
+		temperatura_temp = 0; // Reinicio del tiempo de la medición
+	}
+
+	if(medida_temp == 1 && no_midiendo_temp == 1) // Si está midiendo y activado el flag para no medir, no mide
+	{
+		medida_temp = 0; // No midiendo
+		no_midiendo_temp = 0; // Desactivación del flag para no medir
+		temperatura_temp = 0; // Reinicio del tiempo de la medición
+	}
+
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, medida_temp); // LED encendido cuando se mide temperatura
 }
 
 /* USER CODE END 0 */
@@ -322,22 +382,9 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  // Control puerta
-	  puerta();
-
-	  // Control iluminación
-	  luces();
-
-	  // Ejemplo sensor de temperatura
-	  HAL_ADC_Start(&hadc2);
-	  if (HAL_ADC_PollForConversion(&hadc2, 100) == HAL_OK)
-	  {
-	      Temp_valor = HAL_ADC_GetValue(&hadc2);
-	  }
-	  HAL_ADC_Stop(&hadc2);
-
-	  uint32_t R_NTC = 10000.0 / (1023.0 / Temp_valor - 1.0);
-	  temp = 1.0 / ((1.0 / (25 + 273.15)) + (1.0 / 3950.0) * (log(R_NTC / 10000.0))) - 273.15;
+	  puerta(); // Control puerta
+	  luces(); // Control iluminación
+	  temperatura(); // Control temperatura
 
 	  // Ejemplo ultrasonidos HC-SR04
 	  leerUltrasonido(GPIOA, GPIO_PIN_10); // Leer Ultrasonido conectado a pin A10
@@ -780,7 +827,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(Luces_GPIO_Port, Luces_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, Luces_Pin|LED_temperatura_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
@@ -804,12 +851,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : Luces_Pin */
-  GPIO_InitStruct.Pin = Luces_Pin;
+  /*Configure GPIO pins : Luces_Pin LED_temperatura_Pin */
+  GPIO_InitStruct.Pin = Luces_Pin|LED_temperatura_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(Luces_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
   /*Configure GPIO pin : TRIG_Pin */
   GPIO_InitStruct.Pin = TRIG_Pin;

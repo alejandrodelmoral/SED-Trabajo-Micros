@@ -82,6 +82,8 @@ void Error_Handler(void);
 #define ECHO_GPIO_Port GPIOE
 #define Luces_Pin GPIO_PIN_8
 #define Luces_GPIO_Port GPIOC
+#define LED_temperatura_Pin GPIO_PIN_9
+#define LED_temperatura_GPIO_Port GPIOC
 #define TRIG_Pin GPIO_PIN_10
 #define TRIG_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
