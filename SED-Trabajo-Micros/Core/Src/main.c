@@ -62,10 +62,11 @@ uint32_t LDR_valor;
 // Sensor de temperatura
 uint32_t Temp_valor;
 float temp = 0;
-uint32_t temperatura_temp;
+float temperatura_medida;
 int medida_temp = 0;
 int midiendo_temp = 0;
 int no_midiendo_temp = 0;
+uint32_t temperatura_temp;
 
 // Ultrasonidos HC-SR04
 float dist  = 0;
@@ -83,10 +84,10 @@ volatile int pulsador_puerta = 0;
 volatile int pulsador_temp = 0;
 
 // Puerta
-uint32_t puerta_temp;
 int abierta = 0;
 int abriendo = 0;
 int cerrando = 0;
+uint32_t puerta_temp;
 
 /* USER CODE END PV */
 
@@ -278,6 +279,21 @@ void puerta(void)
 }
 
 // Control de la temperatura
+float medirTemperatura(void)
+{
+	HAL_ADC_Start(&hadc2);
+	if (HAL_ADC_PollForConversion(&hadc2, 100) == HAL_OK)
+	{
+		Temp_valor = HAL_ADC_GetValue(&hadc2);
+	}
+	HAL_ADC_Stop(&hadc2);
+
+	uint32_t R_NTC = 10000.0 / (1023.0 / Temp_valor - 1.0);
+	temp = 1.0 / ((1.0 / (25 + 273.15)) + (1.0 / 3950.0) * (log(R_NTC / 10000.0))) - 273.15;
+
+	return temp;
+}
+
 void temperatura(void)
 {
 	if(readBuf[0] == 'D' || debouncer(&pulsador_temp, GPIOA, GPIO_PIN_0)) // Si se usa Bluetooth o si se pulsa el botón
@@ -297,15 +313,7 @@ void temperatura(void)
 
 	if(medida_temp == 0 && midiendo_temp == 1) // Si no se está midiendo y activado el flag para medir, se mide
 	{
-		HAL_ADC_Start(&hadc2);
-		if (HAL_ADC_PollForConversion(&hadc2, 100) == HAL_OK)
-		{
-			Temp_valor = HAL_ADC_GetValue(&hadc2);
-		}
-		HAL_ADC_Stop(&hadc2);
-
-		uint32_t R_NTC = 10000.0 / (1023.0 / Temp_valor - 1.0);
-		temp = 1.0 / ((1.0 / (25 + 273.15)) + (1.0 / 3950.0) * (log(R_NTC / 10000.0))) - 273.15;
+		temperatura_medida = medirTemperatura(); // Se mide la temperatura
 
 		medida_temp = 1; // Midiendo
 		midiendo_temp = 0; // Desactivación del flag para medir
@@ -408,8 +416,8 @@ int main(void)
 
 	  valor = 0;
 
-  /* USER CODE END 3 */
   }
+  /* USER CODE END 3 */
 }
 
 /**
