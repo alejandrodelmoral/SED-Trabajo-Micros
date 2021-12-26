@@ -244,7 +244,7 @@ void puerta(void)
 		 readBuf[0] = 0; // Reinicio del Bluetooth
 	}
 
-	if(abierta == 0 && abriendo == 1) // Si la puerta está cerrada y activado el flag para abrir la puerta
+	if(abierta == 0 && abriendo == 1) // Si la puerta está cerrada y activado el flag para abrir la puerta, se abre
 	{
 		moverServo(&htim2, 90); // Se abre la puerta
 		abierta = 1; // Puerta ya abierta
@@ -258,7 +258,7 @@ void puerta(void)
 		puerta_temp = 0; // Reinicio del tiempo de la puerta abierta
 	}
 
-	if(abierta == 1 && cerrando == 1) // Si la puerta está abierta y activado el flag para cerrar la puerta
+	if(abierta == 1 && cerrando == 1) // Si la puerta está abierta y activado el flag para cerrar la puerta, se cierra
 	{
 		moverServo(&htim2, 0); // Se cierra la puerta
 		abierta = 0; // Puerta ya cerrada
