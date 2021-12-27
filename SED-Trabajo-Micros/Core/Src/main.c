@@ -65,6 +65,7 @@ char readBuf[1];
 
 // Iluminación
 uint32_t LDR_valor;
+uint32_t iluminacion;
 
 // Puerta
 int abierta = 0;
@@ -224,8 +225,24 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 	}
 }
 
-// Control de la iluminación
-void luces(void)
+// Sensor de temperatura
+float medirTemperatura(void)
+{
+	HAL_ADC_Start(&hadc2);
+	if (HAL_ADC_PollForConversion(&hadc2, 100) == HAL_OK)
+	{
+		Temp_valor = HAL_ADC_GetValue(&hadc2);
+	}
+	HAL_ADC_Stop(&hadc2);
+
+	uint32_t R_NTC = 10000.0 / (1023.0 / Temp_valor - 1.0);
+	temp = 1.0 / ((1.0 / (25 + 273.15)) + (1.0 / 3950.0) * (log(R_NTC / 10000.0))) - 273.15;
+
+	return temp;
+}
+
+// Sensor LDR
+uint32_t medirLDR(void)
 {
 	HAL_ADC_Start(&hadc1);
 	if(HAL_ADC_PollForConversion(&hadc1, 100) == HAL_OK) {
@@ -233,12 +250,20 @@ void luces(void)
 	}
 	HAL_ADC_Stop(&hadc1);
 
-	if(LDR_valor <= 60 || readBuf[0] == 'A' || debouncer(&pulsador_luces_ON, GPIOC, GPIO_PIN_1)) // Si hay poca luminosidad, o si se usa Bluetooth o si se pulsa el botón
+	return LDR_valor;
+}
+
+// Control de la iluminación
+void luces(void)
+{
+	iluminacion = medirLDR();
+
+	if(iluminacion <= 60 || readBuf[0] == 'A' || debouncer(&pulsador_luces_ON, GPIOC, GPIO_PIN_1)) // Si hay poca luminosidad, o si se usa Bluetooth o si se pulsa el botón
 	{
 		pulsador_luces_ON = 0; // Reinicio del pulsador
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, 1); // Enciende la luz
 	}
-	else if(LDR_valor > 60 || readBuf[0] == 'B' || debouncer(&pulsador_luces_OFF, GPIOC, GPIO_PIN_2)) // Si hay suficiente luminosidad, o si se usa Bluetooth o si se pulsa el botón
+	else if(iluminacion > 60 || readBuf[0] == 'B' || debouncer(&pulsador_luces_OFF, GPIOC, GPIO_PIN_2)) // Si hay suficiente luminosidad, o si se usa Bluetooth o si se pulsa el botón
 	{
 		pulsador_luces_OFF = 0; // Reinicio del pulsador
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, 0); // Apaga la luz
@@ -287,21 +312,6 @@ void puerta(void)
 }
 
 // Control de la temperatura
-float medirTemperatura(void)
-{
-	HAL_ADC_Start(&hadc2);
-	if (HAL_ADC_PollForConversion(&hadc2, 100) == HAL_OK)
-	{
-		Temp_valor = HAL_ADC_GetValue(&hadc2);
-	}
-	HAL_ADC_Stop(&hadc2);
-
-	uint32_t R_NTC = 10000.0 / (1023.0 / Temp_valor - 1.0);
-	temp = 1.0 / ((1.0 / (25 + 273.15)) + (1.0 / 3950.0) * (log(R_NTC / 10000.0))) - 273.15;
-
-	return temp;
-}
-
 void temperatura(void)
 {
 	if(readBuf[0] == 'D' || debouncer(&pulsador_temp, GPIOA, GPIO_PIN_0)) // Si se usa Bluetooth o si se pulsa el botón
@@ -344,6 +354,7 @@ void temperatura(void)
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, medida_temp); // LED encendido cuando se mide temperatura
 }
 
+// Control de la alarma
 void alarma(void)
 {
 	leerUltrasonido(GPIOA, GPIO_PIN_10); // Leer Ultrasonido conectado a pin A10
