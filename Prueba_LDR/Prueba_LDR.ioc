@@ -126,4 +126,3 @@ VP_SYS_VS_tim1.Mode=TIM1
 VP_SYS_VS_tim1.Signal=SYS_VS_tim1
 board=STM32F407G-DISC1
 boardIOC=true
-isbadioc=false
