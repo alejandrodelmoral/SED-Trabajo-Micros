@@ -123,23 +123,23 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 // Pulsadores
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
-	if(GPIO_Pin == GPIO_PIN_0) {
+	if(GPIO_Pin == GPIO_PIN_0) { // Temperatura
 		pulsador_temp = 1;
 	}
 
-	if(GPIO_Pin == GPIO_PIN_1) {
+	if(GPIO_Pin == GPIO_PIN_1) { // Iluminación
 		pulsador_luces_ON = 1;
 	}
 
-	if(GPIO_Pin == GPIO_PIN_2) {
+	if(GPIO_Pin == GPIO_PIN_2) { // Iluminación
 		pulsador_luces_OFF = 1;
 	}
 
-	if(GPIO_Pin == GPIO_PIN_3) {
+	if(GPIO_Pin == GPIO_PIN_3) { // Puerta
 		pulsador_puerta = 1;
 	}
 
-	if(GPIO_Pin == GPIO_PIN_4) {
+	if(GPIO_Pin == GPIO_PIN_4) { // Alarma
 		pulsador_alarma = 1;
 	}
 }
@@ -253,7 +253,7 @@ uint32_t medirLDR(void)
 	return LDR_valor;
 }
 
-// Control de la iluminación
+// Control de la iluminación // Tengo que volver a implementar
 void luces(void)
 {
 	iluminacion = medirLDR();
@@ -279,11 +279,13 @@ void puerta(void)
 		 {
 			 abriendo = 1; // Activación del flag para abrir puerta
 		 }
+
 		 else // Si la puerta está abierta
 		 {
 			 cerrando = 1; // Activación del flag para cerrar puerta
 			 puerta_temp = 0; // Reinicio del tiempo de la puerta abierta
 		 }
+
 		 readBuf[0] = 0; // Reinicio del Bluetooth
 		 pulsador_puerta = 0; // Reinicio del pulsador
 	}
@@ -320,11 +322,13 @@ void temperatura(void)
 		 {
 			 midiendo_temp = 1; // Activación del flag para medir
 		 }
+
 		 else // Si se está midiendo
 		 {
 			 no_midiendo_temp = 1; // Activación del flag para no medir
 			 temperatura_temp = 0; // Reinicio del tiempo de la medición
 		 }
+
 		 readBuf[0] = 0; // Reinicio del Bluetooth
 		 pulsador_temp = 0; // Reinicio del pulsador
 	}
@@ -375,6 +379,7 @@ void alarma(void)
 			htim2.Instance->CCR3 = frec_zumb; // Se apaga la alarma
 			alarma_temp = 0; // Reinicio del tiempo de la alarma
 			readBuf[0] = 0; // Reinicio del Bluetooth
+			pulsador_alarma = 0; // Reinicio del pulsador
 		}
 	}
 
@@ -677,7 +682,7 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 84-1;
+  htim1.Init.Prescaler = 45-1;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 65535-1;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
