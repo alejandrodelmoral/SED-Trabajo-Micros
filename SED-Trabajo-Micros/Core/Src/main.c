@@ -53,13 +53,26 @@ UART_HandleTypeDef huart6;
 
 /* USER CODE BEGIN PV */
 
+// Pulsadores
+volatile int pulsador_luces_ON = 0;
+volatile int pulsador_luces_OFF = 0;
+volatile int pulsador_puerta = 0;
+volatile int pulsador_temp = 0;
+volatile int pulsador_alarma = 0;
+
 // Bluetooth
 char readBuf[1];
 
-// LDR
+// Iluminación
 uint32_t LDR_valor;
 
-// Sensor de temperatura
+// Puerta
+int abierta = 0;
+int abriendo = 0;
+int cerrando = 0;
+uint32_t puerta_temp;
+
+// Temperatura
 uint32_t Temp_valor;
 float temp = 0;
 float temperatura_medida;
@@ -68,26 +81,17 @@ int midiendo_temp = 0;
 int no_midiendo_temp = 0;
 uint32_t temperatura_temp;
 
-// Ultrasonidos HC-SR04
+// Alarma
 float dist  = 0;
+int alarma_ON = 0;
+uint8_t frec_zumb = 200;
+uint32_t alarma_temp;
 
 // Detector de sonidos
 uint32_t Sonidos_valor;
 
 // Zumbador pasivo
 uint8_t valor = 0;
-
-// Pulsadores
-volatile int pulsador_luces_ON = 0;
-volatile int pulsador_luces_OFF = 0;
-volatile int pulsador_puerta = 0;
-volatile int pulsador_temp = 0;
-
-// Puerta
-int abierta = 0;
-int abriendo = 0;
-int cerrando = 0;
-uint32_t puerta_temp;
 
 /* USER CODE END PV */
 
@@ -118,6 +122,10 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 // Pulsadores
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
+	if(GPIO_Pin == GPIO_PIN_0) {
+		pulsador_temp = 1;
+	}
+
 	if(GPIO_Pin == GPIO_PIN_1) {
 		pulsador_luces_ON = 1;
 	}
@@ -130,8 +138,8 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		pulsador_puerta = 1;
 	}
 
-	if(GPIO_Pin == GPIO_PIN_0) {
-		pulsador_temp = 1;
+	if(GPIO_Pin == GPIO_PIN_4) {
+		pulsador_alarma = 1;
 	}
 }
 
@@ -336,6 +344,32 @@ void temperatura(void)
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_9, medida_temp); // LED encendido cuando se mide temperatura
 }
 
+void alarma(void)
+{
+	leerUltrasonido(GPIOA, GPIO_PIN_10); // Leer Ultrasonido conectado a pin A10
+	HAL_Delay(100); // Espera para volver a disparar, NO menor a 100ms !!!
+
+	if(dist < 10) // Si la distancia al sensor es menor de 10cm
+	{
+		alarma_ON = 1; // Activación de la alarma
+		alarma_temp = HAL_GetTick(); // Se coge el tiempo actual
+		htim2.Instance->CCR3 = frec_zumb; // Se enciende la alarma
+	}
+
+	if(alarma_ON == 1) // Si está activada la alarma
+	{
+		if(readBuf[0] == 'E' || debouncer(&pulsador_alarma, GPIOA, GPIO_PIN_4) || HAL_GetTick() - alarma_temp > 5000) // Si se usa Bluetooth, o si se pulsa el botón o han pasado 5s, se desactiva
+		{
+			alarma_ON = 0; // Desactivación de la alarma
+			htim2.Instance->CCR3 = frec_zumb; // Se apaga la alarma
+			alarma_temp = 0; // Reinicio del tiempo de la alarma
+			readBuf[0] = 0; // Reinicio del Bluetooth
+		}
+	}
+
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_8, alarma_ON); // LED encendido cuando suena la alarma
+}
+
 /* USER CODE END 0 */
 
 /**
@@ -393,11 +427,9 @@ int main(void)
 	  puerta(); // Control puerta
 	  luces(); // Control iluminación
 	  temperatura(); // Control temperatura
+	  alarma(); // Control alarma
 
-	  // Ejemplo ultrasonidos HC-SR04
-	  leerUltrasonido(GPIOA, GPIO_PIN_10); // Leer Ultrasonido conectado a pin A10
-	  HAL_Delay(100); // Espera para volver a disparar, NO menor a 100ms !!!
-
+	  /*
 	  // Ejemplo del detector de sonidos
 	  HAL_ADC_Start(&hadc3);
 	  if (HAL_ADC_PollForConversion(&hadc3, 100) == HAL_OK)
@@ -415,6 +447,7 @@ int main(void)
 	  }
 
 	  valor = 0;
+	  */
 
   }
   /* USER CODE END 3 */
@@ -835,10 +868,10 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, Luces_Pin|LED_temperatura_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, LED_iluminaci_n_Pin|LED_temperatura_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, LED_alarma_Pin|TRIG_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pins : Pulsador_luces_ON_Pin Pulsador_luces_OFF_Pin Pulsador_puerta_Pin */
   GPIO_InitStruct.Pin = Pulsador_luces_ON_Pin|Pulsador_luces_OFF_Pin|Pulsador_puerta_Pin;
@@ -846,8 +879,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PA0 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  /*Configure GPIO pins : PA0 Pulsador_alarma_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|Pulsador_alarma_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -859,19 +892,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : Luces_Pin LED_temperatura_Pin */
-  GPIO_InitStruct.Pin = Luces_Pin|LED_temperatura_Pin;
+  /*Configure GPIO pins : LED_iluminaci_n_Pin LED_temperatura_Pin */
+  GPIO_InitStruct.Pin = LED_iluminaci_n_Pin|LED_temperatura_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : TRIG_Pin */
-  GPIO_InitStruct.Pin = TRIG_Pin;
+  /*Configure GPIO pins : LED_alarma_Pin TRIG_Pin */
+  GPIO_InitStruct.Pin = LED_alarma_Pin|TRIG_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-  HAL_GPIO_Init(TRIG_GPIO_Port, &GPIO_InitStruct);
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
@@ -885,6 +918,9 @@ static void MX_GPIO_Init(void)
 
   HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI3_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI4_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI4_IRQn);
 
 }
 

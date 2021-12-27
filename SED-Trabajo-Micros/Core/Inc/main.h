@@ -76,14 +76,19 @@ void Error_Handler(void);
 #define LDR_GPIO_Port GPIOA
 #define Temperatura_Pin GPIO_PIN_3
 #define Temperatura_GPIO_Port GPIOA
+#define Pulsador_alarma_Pin GPIO_PIN_4
+#define Pulsador_alarma_GPIO_Port GPIOA
+#define Pulsador_alarma_EXTI_IRQn EXTI4_IRQn
 #define Zumbador_pasivo_Pin GPIO_PIN_0
 #define Zumbador_pasivo_GPIO_Port GPIOB
 #define ECHO_Pin GPIO_PIN_9
 #define ECHO_GPIO_Port GPIOE
-#define Luces_Pin GPIO_PIN_8
-#define Luces_GPIO_Port GPIOC
+#define LED_iluminaci_n_Pin GPIO_PIN_8
+#define LED_iluminaci_n_GPIO_Port GPIOC
 #define LED_temperatura_Pin GPIO_PIN_9
 #define LED_temperatura_GPIO_Port GPIOC
+#define LED_alarma_Pin GPIO_PIN_8
+#define LED_alarma_GPIO_Port GPIOA
 #define TRIG_Pin GPIO_PIN_10
 #define TRIG_GPIO_Port GPIOA
 /* USER CODE BEGIN Private defines */
