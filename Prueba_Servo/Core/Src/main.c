@@ -45,12 +45,17 @@ TIM_HandleTypeDef htim2;
 /* USER CODE BEGIN PV */
 
 volatile int pulsador = 0;
+volatile int pulsador1 = 0;
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 {
 	if(GPIO_Pin == GPIO_PIN_0) {
 		pulsador = 1;
 	}
+
+	if(GPIO_Pin == GPIO_PIN_3) {
+			pulsador1 = 1;
+		}
 }
 
 int debouncer(volatile int* button_int, GPIO_TypeDef* GPIO_port, uint16_t GPIO_number)
@@ -149,11 +154,12 @@ int main(void)
 
     /* USER CODE BEGIN 3 */
 
-	  if(debouncer(&pulsador, GPIOA, GPIO_PIN_0)) {
+	  if(debouncer(&pulsador1, GPIOC, GPIO_PIN_3) || debouncer(&pulsador, GPIOA, GPIO_PIN_0)) {
+		  pulsador1 = 0;
 		  pulsador = 0;
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 1);
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, 1);
 		  HAL_Delay(500);
-		  HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, 0);
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, 0);
 
 		  moverServo(&htim2, 0); // Mueve el servo que esta en htim2, X grados
 		  HAL_Delay(1000);
@@ -339,6 +345,15 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOD, GPIO_PIN_12, GPIO_PIN_RESET);
 
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_6, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin : PC3 */
+  GPIO_InitStruct.Pin = GPIO_PIN_3;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   /*Configure GPIO pin : PA0 */
   GPIO_InitStruct.Pin = GPIO_PIN_0;
   GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
@@ -352,9 +367,19 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PC6 */
+  GPIO_InitStruct.Pin = GPIO_PIN_6;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
+
   /* EXTI interrupt init*/
   HAL_NVIC_SetPriority(EXTI0_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(EXTI0_IRQn);
+
+  HAL_NVIC_SetPriority(EXTI3_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(EXTI3_IRQn);
 
 }
 
