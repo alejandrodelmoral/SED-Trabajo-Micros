@@ -64,6 +64,9 @@ volatile int pulsador_alarma = 0;
 char readBuf[1];
 
 // Iluminación
+int encendidas = 0;
+int luces_ON = 0;
+int luces_OFF = 0;
 uint32_t LDR_valor;
 uint32_t iluminacion;
 
@@ -253,21 +256,45 @@ uint32_t medirLDR(void)
 	return LDR_valor;
 }
 
-// Control de la iluminación // Tengo que volver a implementar
+// Control de la iluminación
 void luces(void)
 {
 	iluminacion = medirLDR();
 
 	if(iluminacion <= 60 || readBuf[0] == 'A' || debouncer(&pulsador_luces_ON, GPIOC, GPIO_PIN_1)) // Si hay poca luminosidad, o si se usa Bluetooth o si se pulsa el botón
 	{
-		pulsador_luces_ON = 0; // Reinicio del pulsador
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, 1); // Enciende la luz
+		if(encendidas == 0) // Si no están encendidas
+		 {
+			luces_ON = 1; // Activación del flag para encender
+		 }
+
+		 else // Si están encendidas
+		 {
+			 luces_OFF = 1; // Activación del flag para apagar
+		 }
+
+		 readBuf[0] = 0; // Reinicio del Bluetooth
+		 pulsador_luces_ON = 0; // Reinicio del pulsador
 	}
-	else if(iluminacion > 60 || readBuf[0] == 'B' || debouncer(&pulsador_luces_OFF, GPIOC, GPIO_PIN_2)) // Si hay suficiente luminosidad, o si se usa Bluetooth o si se pulsa el botón
+
+	if(encendidas == 0 && luces_ON == 1) // Si están apagadas y activado el flag para encender, se encienden
 	{
-		pulsador_luces_OFF = 0; // Reinicio del pulsador
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, 0); // Apaga la luz
+		encendidas = 1; // Encendidas
+		luces_ON = 0; // Desactivación del flag para encender
 	}
+
+	if(encendidas == 1 && luces_OFF == 0) // Si están encendidas y desactivado el flag para apagar, se apagan
+	{
+		luces_OFF = 1; // Activación del flag para apagar
+	}
+
+	if(encendidas == 1 && luces_OFF == 1) // Si están encendidas y activado el flag para apagar, se apagan
+	{
+		encendidas = 0; // Apagadas
+		luces_OFF = 0; // Desactivación del flag para apagar
+	}
+
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_8, encendidas); // LED encendido cuando se encienden las luces
 }
 
 // Control de la puerta
