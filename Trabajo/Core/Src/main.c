@@ -140,7 +140,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 		pulsador_luces_ON = 1;
 	}
 
-	if(GPIO_Pin == GPIO_PIN_2) { // Iluminación
+	if(GPIO_Pin == GPIO_PIN_2) { // Temperatura
 		pulsador_luces_OFF = 1;
 	}
 
@@ -322,7 +322,7 @@ void luces(void)
 
 	if(encendidas == 1 && (iluminacion > 80 || readBuf[0] == 'A' || debouncer2(&pulsador_luces_ON, GPIOC, GPIO_PIN_1) == 1)) // Si hay suficiente luminosidad, o si se usa Bluetooth o si se pulsa el botón
 	{
-			luces_OFF = 1; // Activación del flag para apagar
+		luces_OFF = 1; // Activación del flag para apagar
 
 		readBuf[0] = 0; // Reinicio del Bluetooth
 		pulsador_luces_ON = 0; // Reinicio del pulsador
