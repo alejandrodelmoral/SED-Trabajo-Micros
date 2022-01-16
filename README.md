@@ -1,4 +1,4 @@
-# Casa domótica
+# Casa domótica 🏠
 
 _Este proyecto se ha realizado para la asignatura de cuarto curso **Sistemas Electrónicos Digitales** impartida en el Grado en Ingeniería Electrónica Industrial y Automática, curso 2021/22._
 
