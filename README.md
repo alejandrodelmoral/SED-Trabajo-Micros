@@ -4,7 +4,7 @@ _Este proyecto se ha realizado para la asignatura de cuarto curso **Sistemas Ele
 
 **Escuela Técnica Superior de Ingeniería y Diseño Industrial**  
 **Universidad Politécnica de Madrid**
-
+**************************************
 ## Miembros ✒️
 * **Alejandro del Moral** - [alejandrodelmoral](https://github.com/alejandrodelmoral)
 * **Jacob Sánchez** - [jacobsanchezmoreira](https://github.com/jacobsanchezmoreira)
