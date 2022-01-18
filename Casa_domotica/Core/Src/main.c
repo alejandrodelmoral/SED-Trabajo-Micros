@@ -291,7 +291,7 @@ void luces(void)
 {
 	iluminacion = medirLDR();
 
-	if(encendidas == 0 && (iluminacion <= 60 || readBuf[0] == 'A' || debouncer(&pulsador_luces_ON, GPIOC, GPIO_PIN_1) == 1)) // Si hay poca luminosidad, o si se usa Bluetooth o si se pulsa el botón
+	if(encendidas == 0 && (iluminacion <= 50 || readBuf[0] == 'A' || debouncer(&pulsador_luces_ON, GPIOC, GPIO_PIN_1) == 1)) // Si hay poca luminosidad, o si se usa Bluetooth o si se pulsa el botón
 	{
 		luces_ON = 1; // Activación del flag para encender
 
@@ -299,7 +299,7 @@ void luces(void)
 		pulsador_luces_ON = 0; // Reinicio del pulsador
 	}
 
-	if(encendidas == 1 && (iluminacion > 80 || readBuf[0] == 'A' || debouncer(&pulsador_luces_ON, GPIOC, GPIO_PIN_1) == 1)) // Si hay suficiente luminosidad, o si se usa Bluetooth o si se pulsa el botón
+	if(encendidas == 1 && (iluminacion > 90 || readBuf[0] == 'A' || debouncer(&pulsador_luces_ON, GPIOC, GPIO_PIN_1) == 1)) // Si hay suficiente luminosidad, o si se usa Bluetooth o si se pulsa el botón
 	{
 		luces_OFF = 1; // Activación del flag para apagar
 
