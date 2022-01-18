@@ -9,3 +9,24 @@ _Este proyecto se ha realizado para la asignatura de cuarto curso **Sistemas Ele
 * **Alejandro del Moral** - [alejandrodelmoral](https://github.com/alejandrodelmoral)
 * **Jacob Sánchez** - [jacobsanchezmoreira](https://github.com/jacobsanchezmoreira)
 * **Wei Zheng** - [weizheng13](https://github.com/weizheng13)
+
+## Miembros ✒️
+* **Alejandro del Moral** - [alejandrodelmoral](https://github.com/alejandrodelmoral)
+* **Jacob Sánchez** - [jacobsanchezmoreira](https://github.com/jacobsanchezmoreira)
+* **Wei Zheng** - [weizheng13](https://github.com/weizheng13)
+* ## Miembros ✒️
+* **Alejandro del Moral** - [alejandrodelmoral](https://github.com/alejandrodelmoral)
+* **Jacob Sánchez** - [jacobsanchezmoreira](https://github.com/jacobsanchezmoreira)
+* **Wei Zheng** - [weizheng13](https://github.com/weizheng13)
+* ## Miembros ✒️
+* **Alejandro del Moral** - [alejandrodelmoral](https://github.com/alejandrodelmoral)
+* **Jacob Sánchez** - [jacobsanchezmoreira](https://github.com/jacobsanchezmoreira)
+* **Wei Zheng** - [weizheng13](https://github.com/weizheng13)
+* ## Miembros ✒️
+* **Alejandro del Moral** - [alejandrodelmoral](https://github.com/alejandrodelmoral)
+* **Jacob Sánchez** - [jacobsanchezmoreira](https://github.com/jacobsanchezmoreira)
+* **Wei Zheng** - [weizheng13](https://github.com/weizheng13)
+* ## Miembros ✒️
+* **Alejandro del Moral** - [alejandrodelmoral](https://github.com/alejandrodelmoral)
+* **Jacob Sánchez** - [jacobsanchezmoreira](https://github.com/jacobsanchezmoreira)
+* **Wei Zheng** - [weizheng13](https://github.com/weizheng13)
